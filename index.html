@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+ <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>القرآن الكريم</title>
+    
+    <link rel="manifest" href="manifest.json">
+
+    <meta name="theme-color" content="#007bff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="القرآن الكريم">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  :root {
+    --primary-color: #007bff;
+    --primary-hover: #0056b3;
+    --secondary-color: #28a745;
+    --secondary-hover: #218838;
+    --text-dark: #1a2533;
+    --text-light: #6c757d;
+    --bg-light: #f0f2f5;
+    --container-bg: #ffffff;
+    --border-color: #dee2e6;
+  }
+  
+  body {
+    font-family: 'Cairo', sans-serif;
+    margin: 0;
+    background-color: var(--bg-light);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+
+  .container {
+    max-width: 800px;
+    width: 100%;
+    background: var(--container-bg);
+    padding: 25px 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    animation: fadeIn 0.6s ease-in-out;
+    text-align: center;
+  }
+
+  @keyframes fadeIn {
+    from {opacity: 0; transform: translateY(20px);}
+    to {opacity: 1; transform: translateY(0);}
+  }
+
+  h1 {
+    color: var(--text-dark);
+    margin-bottom: 25px;
+    font-size: 2.2rem;
+    font-weight: 700;
+  }
+
+  .selection-group {
+    margin-bottom: 20px;
+  }
+
+  label {
+    display: block;
+    margin-top: 15px;
+    font-weight: 600;
+    color: var(--text-dark);
+    text-align: right;
+    margin-bottom: 5px;
+  }
+
+  select {
+    width: 100%;
+    padding: 12px;
+    margin-top: 5px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: 'Cairo', sans-serif;
+    background-color: #fcfdff;
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+  
+  select:disabled {
+      background-color: #e9ecef;
+      cursor: not-allowed;
+  }
+
+  select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 8px rgba(0, 123, 255, 0.25);
+    outline: none;
+  }
+
+  #loadingMessage {
+    text-align: center;
+    margin-top: 15px;
+    color: var(--text-light);
+    font-style: italic;
+    height: 20px;
+  }
+  
+  /* --- Player Styles --- */
+  #player-container {
+    margin-top: 30px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+    animation: fadeIn 0.5s;
+  }
+  
+  .surah-info-display {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #343a40;
+    margin-bottom: 15px;
+  }
+  
+  .progress-container {
+    background: #e9ecef;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 20px 0 10px;
+    height: 8px;
+  }
+  
+  .progress-bar {
+    background: var(--primary-color);
+    height: 100%;
+    width: 0%;
+    border-radius: 5px;
+    transition: width 0.1s linear;
+  }
+  
+  .time-display {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: var(--text-light);
+    font-variant-numeric: tabular-nums;
+  }
+  
+  .player-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px 0;
+  }
+  
+  .control-btn {
+    background: none;
+    border: none;
+    color: #343a40;
+    font-size: 1.5rem;
+    cursor: pointer;
+    margin: 0 20px;
+    transition: color 0.2s ease, transform 0.2s ease;
+  }
+  
+  .control-btn:hover {
+    color: var(--primary-color);
+    transform: scale(1.1);
+  }
+  
+  .play-btn {
+    font-size: 2.2rem;
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.4);
+  }
+  
+  .play-btn:hover {
+    background-color: var(--primary-hover);
+    color: white;
+    transform: scale(1.05);
+  }
+  
+  .extra-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
+    flex-wrap: wrap;
+    gap: 15px;
+    padding: 0 10px;
+  }
+  
+  .volume-container {
+    display: flex;
+    align-items: center;
+    color: var(--text-light);
+    gap: 10px;
+  }
+  
+  #volumeSlider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100px;
+    height: 5px;
+    background: var(--border-color);
+    outline: none;
+    border-radius: 5px;
+    transition: opacity .2s;
+    cursor: pointer;
+  }
+  
+  #volumeSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 15px;
+    height: 15px;
+    background: var(--primary-color);
+    cursor: pointer;
+    border-radius: 50%;
+  }
+  
+  #volumeSlider::-moz-range-thumb {
+    width: 15px;
+    height: 15px;
+    background: var(--primary-color);
+    cursor: pointer;
+    border-radius: 50%;
+  }
+  
+  .download-buttons {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    font-size: 1rem;
+    font-family: 'Cairo', sans-serif;
+    font-weight: 600;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    border: none;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    cursor: pointer;
+  }
+  
+  #downloadLink { background-color: var(--secondary-color); }
+  #downloadLink:hover { background-color: var(--secondary-hover); }
+  #fullDownloadLink { background-color: var(--primary-color); }
+  #fullDownloadLink:hover { background-color: var(--primary-hover); }
+  
+  /* Responsive */
+  @media (max-width: 600px) {
+    .container { padding: 20px 15px; }
+    h1 { font-size: 1.8rem; }
+    .extra-controls { flex-direction: column; align-items: center; }
+    .download-buttons { margin-top: 15px; width: 100%; justify-content: center; }
+    .btn { flex-grow: 1; justify-content: center; padding: 12px; }
+  }
+
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>القرآن الكريم</h1>
+
+  <div class="selection-group">
+      <label for="languageSelect">اللغة:</label>
+      <select id="languageSelect"></select>
+
+      <label for="reciterSelect">القارئ:</label>
+      <select id="reciterSelect" disabled></select>
+
+      <label for="surahSelect">السورة:</label>
+      <select id="surahSelect" disabled></select>
+  </div>
+  
+  <div id="loadingMessage"></div>
+
+  <audio id="audioPlayer" style="display:none;"></audio>
+  <div id="player-container" style="display:none;">
+      <div class="surah-info-display">
+          <span id="playerReciterName"></span> - <span id="playerSurahName"></span>
+      </div>
+      <div class="progress-container">
+          <div class="progress-bar"></div>
+      </div>
+      <div class="time-display">
+          <span id="currentTime">00:00</span>
+          <span id="totalDuration">00:00</span>
+      </div>
+      <div class="player-controls">
+          <button id="prevBtn" class="control-btn" aria-label="Previous Surah"><i class="fas fa-step-backward"></i></button>
+          <button id="playPauseBtn" class="control-btn play-btn" aria-label="Play/Pause"><i class="fas fa-play"></i></button>
+          <button id="nextBtn" class="control-btn" aria-label="Next Surah"><i class="fas fa-step-forward"></i></button>
+      </div>
+      <div class="extra-controls">
+          <div class="volume-container">
+              <i class="fas fa-volume-down"></i>
+              <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="1" aria-label="Volume">
+              <i class="fas fa-volume-up"></i>
+          </div>
+          <div class="download-buttons">
+               <a id="downloadLink" class="btn" href="#" download><i class="fas fa-download"></i> تحميل السورة</a>
+               <a id="fullDownloadLink" class="btn" href="#"><i class="fas fa-book-quran"></i> تحميل المصحف</a>
+          </div>
+      </div>
+  </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // --- Element Selectors (No changes here) ---
+    const languageSelect = document.getElementById('languageSelect');
+    const reciterSelect = document.getElementById('reciterSelect');
+    const surahSelect = document.getElementById('surahSelect');
+    const loadingMessage = document.getElementById('loadingMessage');
+    
+    const audioPlayer = document.getElementById('audioPlayer');
+    const playerContainer = document.getElementById('player-container');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const prevBtn = document.getElementById('prevBtn');
+    const volumeSlider = document.getElementById('volumeSlider');
+    const progressBar = document.querySelector('.progress-bar');
+    const progressContainer = document.querySelector('.progress-container');
+    const currentTimeEl = document.getElementById('currentTime');
+    const totalDurationEl = document.getElementById('totalDuration');
+    const playerSurahName = document.getElementById('playerSurahName');
+    const playerReciterName = document.getElementById('playerReciterName');
+    const downloadLink = document.getElementById('downloadLink');
+    const fullDownloadLink = document.getElementById('fullDownloadLink');
+
+    // --- State Variables (No changes here) ---
+    let recitersData = [];
+    let surahsData = [];
+    let isPlaying = false;
+    let isDownloading = false; // To prevent multiple concurrent downloads
+
+    // --- Languages Array (No changes here) ---
+    const languages = [
+      {code:'ar', name:'العربية'}, {code:'eng', name:'English'}, {code:'fr', name:'Français'},
+      {code:'es', name:'Español'}, {code:'de', name:'Deutsch'}, {code:'ur', name:'اردو'},
+      {code:'bn', name:'বাংলা'}, {code:'tr', name:'Türkçe'}, {code:'ru', name:'Русский'},
+      {code:'id', name:'Bahasa Indonesia'}, {code:'pt', name:'Português'}
+    ];
+
+    languageSelect.innerHTML = languages.map(l => `<option value="${l.code}">${l.name}</option>`).join('');
+    languageSelect.value = localStorage.getItem('quran_language') || 'ar';
+
+    // --- Utility Functions (No changes here) ---
+    const showLoading = (msg) => loadingMessage.textContent = msg;
+    const hideLoading = () => loadingMessage.textContent = '';
+    const formatTime = (seconds) => {
+        const minutes = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    // --- Data Fetching & Population (No changes here) ---
+    async function fetchData(url) {
+        try {
+            showLoading('...جاري تحميل البيانات');
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+            const data = await res.json();
+            hideLoading();
+            return data;
+        } catch (e) {
+            console.error('Fetch error:', e);
+            alert('تعذر تحميل البيانات. يرجى التحقق من اتصالك بالإنترنت.');
+            hideLoading();
+            return null;
+        }
+    }
+
+    async function populateReciters() { /* ... No change here ... */
+        reciterSelect.disabled = true;
+        const data = await fetchData(`https://www.mp3quran.net/api/v3/reciters?language=${languageSelect.value}`);
+        if (data && data.reciters) {
+            recitersData = data.reciters;
+            reciterSelect.innerHTML = `<option value="">-- اختر القارئ --</option>` +
+                recitersData.map(r => `<option value="${r.id}" data-moshaf='${JSON.stringify(r.moshaf)}'>${r.name}</option>`).join('');
+            reciterSelect.disabled = false;
+            reciterSelect.value = localStorage.getItem('quran_reciter') || '';
+        }
+    }
+
+    async function populateSurahs() { /* ... No change here ... */
+        surahSelect.disabled = true;
+        const data = await fetchData(`https://www.mp3quran.net/api/v3/suwar?language=${languageSelect.value}`);
+        if (data && data.suwar) {
+            surahsData = data.suwar;
+            surahSelect.innerHTML = `<option value="">-- اختر السورة --</option>` +
+                surahsData.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+            surahSelect.disabled = false;
+            surahSelect.value = localStorage.getItem('quran_surah') || '';
+        }
+    }
+
+    // --- Player Logic (No changes here) ---
+    function updatePlayer(autoplay = false) { /* ... No change here ... */
+        localStorage.setItem('quran_language', languageSelect.value);
+        localStorage.setItem('quran_reciter', reciterSelect.value);
+        localStorage.setItem('quran_surah', surahSelect.value);
+
+        const reciterOpt = reciterSelect.options[reciterSelect.selectedIndex];
+        const surahId = surahSelect.value;
+
+        if (!reciterOpt || !reciterOpt.value || !surahId) {
+            playerContainer.style.display = 'none';
+            return;
+        }
+
+        const moshafData = JSON.parse(reciterOpt.dataset.moshaf);
+        if (!moshafData.length) {
+            alert('لا توجد تلاوات متاحة لهذا القارئ');
+            return;
+        }
+
+        const moshafEntry = moshafData[0];
+        const surahList = moshafEntry.surah_list.split(',');
+
+        if (!surahList.includes(surahId)) {
+            alert('السورة غير متوفرة لهذا القارئ في هذا المصحف');
+            playerContainer.style.display = 'none';
+            return;
+        }
+
+        const surahName = surahsData.find(s => s.id == surahId)?.name || `سورة ${surahId}`;
+        const paddedId = String(surahId).padStart(3, '0');
+        const audioUrl = `${moshafEntry.server}${paddedId}.mp3`;
+
+        audioPlayer.src = audioUrl;
+        
+        playerContainer.style.display = 'block';
+        playerSurahName.textContent = surahName;
+        playerReciterName.textContent = reciterOpt.text;
+        
+        downloadLink.href = audioUrl;
+        downloadLink.download = `${reciterOpt.text}_${surahName}.mp3`;
+        fullDownloadLink.href = moshafEntry.server;
+
+        if (autoplay) {
+            audioPlayer.play();
+        }
+    }
+
+    function togglePlayPause() { /* ... No change here ... */
+        if (isPlaying) {
+            audioPlayer.pause();
+        } else {
+            audioPlayer.play();
+        }
+    }
+
+    function playNext() { /* ... No change here ... */
+        let nextIndex = surahSelect.selectedIndex + 1;
+        if (nextIndex >= surahSelect.options.length) {
+            nextIndex = 1;
+        }
+        surahSelect.selectedIndex = nextIndex;
+        updatePlayer(true);
+    }
+
+    function playPrev() { /* ... No change here ... */
+        let prevIndex = surahSelect.selectedIndex - 1;
+        if (prevIndex < 1) {
+            prevIndex = surahSelect.options.length - 1;
+        }
+        surahSelect.selectedIndex = prevIndex;
+        updatePlayer(true);
+    }
+
+    function updateProgress() { /* ... No change here ... */
+        const { duration, currentTime } = audioPlayer;
+        const progressPercent = (currentTime / duration) * 100;
+        progressBar.style.width = `${progressPercent}%`;
+        currentTimeEl.textContent = formatTime(currentTime);
+    }
+
+    function setProgress(e) { /* ... No change here ... */
+        const width = this.clientWidth;
+        const clickX = e.offsetX;
+        const duration = audioPlayer.duration;
+        if(duration) {
+            audioPlayer.currentTime = (clickX / width) * duration;
+        }
+    }
+    
+    // --- NEW: Force Download Function ---
+    async function forceDownload(url, filename) {
+        if (isDownloading) return; // Prevent clicking while a download is in progress
+        isDownloading = true;
+        showLoading('...جاري تجهيز التحميل');
+        
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`Network response was not ok: ${response.statusText}`);
+            
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            
+            const tempLink = document.createElement('a');
+            tempLink.style.display = 'none';
+            tempLink.href = blobUrl;
+            tempLink.setAttribute('download', filename);
+            
+            document.body.appendChild(tempLink);
+            tempLink.click();
+            document.body.removeChild(tempLink);
+            
+            window.URL.revokeObjectURL(blobUrl);
+        } catch(error) {
+            console.error("Download failed:", error);
+            alert("فشل التنزيل. يرجى المحاولة مرة أخرى.");
+        } finally {
+            isDownloading = false;
+            hideLoading();
+        }
+    }
+
+    // --- Event Listeners ---
+    languageSelect.addEventListener('change', async () => { /* ... No change here ... */
+        playerContainer.style.display = 'none';
+        await populateReciters();
+        await populateSurahs();
+        updatePlayer(false);
+    });
+    reciterSelect.addEventListener('change', () => updatePlayer(false));
+    surahSelect.addEventListener('change', () => updatePlayer(true));
+
+    // Player Listeners
+    playPauseBtn.addEventListener('click', togglePlayPause);
+    nextBtn.addEventListener('click', playNext);
+    prevBtn.addEventListener('click', playPrev);
+    volumeSlider.addEventListener('input', (e) => audioPlayer.volume = e.target.value);
+    progressContainer.addEventListener('click', setProgress);
+    audioPlayer.addEventListener('timeupdate', updateProgress);
+    audioPlayer.addEventListener('ended', playNext);
+    audioPlayer.addEventListener('play', () => { /* ... No change here ... */
+        isPlaying = true;
+        playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+        playPauseBtn.setAttribute('aria-label', 'Pause');
+    });
+    audioPlayer.addEventListener('pause', () => { /* ... No change here ... */
+        isPlaying = false;
+        playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+        playPauseBtn.setAttribute('aria-label', 'Play');
+    });
+    audioPlayer.addEventListener('loadedmetadata', () => { /* ... No change here ... */
+        totalDurationEl.textContent = formatTime(audioPlayer.duration);
+    });
+    
+    // --- MODIFIED: Download Link Listener ---
+    downloadLink.addEventListener('click', (event) => {
+        // Prevent the default browser action (opening the link in a new tab)
+        event.preventDefault();
+        
+        const url = event.currentTarget.href;
+        const filename = event.currentTarget.download;
+        
+        // Ensure the link is not just a placeholder before attempting to download
+        if (url && !url.endsWith('#')) {
+            forceDownload(url, filename);
+        }
+    });
+
+    // --- Initial Load (No changes here) ---
+    async function initializeApp() { /* ... No change here ... */
+        await populateReciters();
+        await populateSurahs();
+        if (reciterSelect.value && surahSelect.value) {
+            updatePlayer(false);
+        }
+    }
+    initializeApp();
+});
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('service-worker.js');
+}
+</script>
+</body>
+</html>
