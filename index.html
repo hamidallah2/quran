@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>القرآن الكريم</title>
+
+<!-- PWA Essentials -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#28a745">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="القرآن الكريم">
+<link rel="apple-touch-icon" href="icons/icon-192x192.png">
+
+<!-- Fonts / Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<!-- Plyr CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css" />
+
+<style>
+:root {
+  --primary-color: #28a745;
+  --primary-hover: #218838;
+  --border-color: #dee2e6;
+}
+body {
+  font-family: 'Cairo', sans-serif;
+  margin: 0;
+  background: #f0f2f5;
+  padding: 10px;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+.container {
+  max-width: 1200px;
+  height: calc(100vh - 20px);
+  margin: 0 auto;
+  background: #fff;
+  padding: 24px;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+h1 { margin: 0 0 20px; font-weight: 700; }
+label { display: block; margin-top: 12px; margin-bottom: 6px; font-weight: 600; }
+select {
+  width: 100%; padding: 10px;
+  border-radius: 8px; border: 1px solid var(--border-color);
+}
+#loadingMessage { margin-top: 12px; min-height: 20px; font-style: italic; }
+#player-wrapper {
+  background: #fff; padding: 15px; display: none;
+  box-shadow: 0 -2px 6px rgba(0,0,0,0.05);
+}
+.info-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.download-buttons { display: flex; gap: 8px; }
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 14px; border-radius: 8px; font-weight: 600;
+  color: #fff; background: var(--primary-color); text-decoration: none;
+}
+.btn:hover { background: var(--primary-hover); }
+@media (min-width: 900px) {
+  .container { flex-direction: row; gap: 24px; }
+  .controls-column { flex: 1; }
+  .player-column { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  #player-wrapper { position: static; box-shadow: none; border: 1px solid var(--border-color); border-radius: 10px; }
+}
+/* Plyr customizations */
+.plyr__controls { flex-wrap: wrap; }
+.plyr__progress { flex: 1 1 100%; }
+.time-display { font-weight: bold; margin-top: 4px; width: 100%; text-align: center; }
+
+/* Search overlay styles */
+#reciterSearchOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 999;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 60px;
+}
+
+#reciterSearchBox {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 16px; /* force side margins so it never hits edges */
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#reciterSearchInput {
+  width: calc(100% - 20px); /* leave space inside box */
+  max-width: 360px;         /* never exceed this width */
+  margin: 0 auto 10px auto; /* center horizontally */
+  display: block;
+  padding: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 16px;
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(4px);
+}
+
+#reciterSearchResults {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.search-result-item {
+  padding: 8px;
+  margin-bottom: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 15px;
+  background: rgba(255,255,255,0.85); /* floating card style */
+  backdrop-filter: blur(4px);
+}
+.search-result-item:hover {
+  background: rgba(255,255,255,1);
+}
+
+mark {
+  background: yellow;
+  padding: 0;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="controls-column">
+    <h1>القرآن الكريم</h1>
+    <label for="languageSelect">اللغة:</label>
+    <select id="languageSelect"></select>
+
+    <label for="reciterSelect">القارئ:
+      <i id="openReciterSearch" class="fas fa-search" style="cursor:pointer;float:left;color:#28a745;"></i>
+    </label>
+    <select id="reciterSelect" disabled></select>
+
+    <label for="moshafSelect">الرواية / المصحف:</label>
+    <select id="moshafSelect" disabled></select>
+
+    <label for="surahSelect">السورة:</label>
+    <select id="surahSelect" disabled></select>
+
+    <div id="loadingMessage"></div>
+  </div>
+
+  <div class="player-column">
+    <div id="player-wrapper">
+      <div class="info-row">
+        <div><span id="playerReciterName"></span> — <span id="playerSurahName"></span></div>
+        <div class="download-buttons">
+          <a id="downloadLink" class="btn" href="#"><i class="fas fa-download"></i> تحميل السورة</a>
+        </div>
+      </div>
+      <audio id="audioPlayer" class="plyr" controls crossorigin="anonymous"></audio>
+      <div class="time-display"><span id="currentTime">00:00</span> / <span id="totalTime">00:00</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- Search Overlay -->
+<div id="reciterSearchOverlay">
+  <div id="reciterSearchBox">
+    <input type="text" id="reciterSearchInput" placeholder="اكتب اسم القارئ للبحث">
+    <div id="reciterSearchResults"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.polyfilled.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const languageSelect = document.getElementById('languageSelect');
+  const reciterSelect = document.getElementById('reciterSelect');
+  const moshafSelect = document.getElementById('moshafSelect');
+  const surahSelect = document.getElementById('surahSelect');
+  const loadingMessage = document.getElementById('loadingMessage');
+  const playerWrapper = document.getElementById('player-wrapper');
+  const audioPlayer = document.getElementById('audioPlayer');
+  const playerSurahName = document.getElementById('playerSurahName');
+  const playerReciterName = document.getElementById('playerReciterName');
+  const downloadLink = document.getElementById('downloadLink');
+  const currentTimeEl = document.getElementById('currentTime');
+  const totalTimeEl = document.getElementById('totalTime');
+
+  // Search modal elements
+  const openReciterSearch = document.getElementById('openReciterSearch');
+  const reciterSearchOverlay = document.getElementById('reciterSearchOverlay');
+  const reciterSearchInput = document.getElementById('reciterSearchInput');
+  const reciterSearchResults = document.getElementById('reciterSearchResults');
+
+  let recitersData = [];
+  let recitersIndex = [];
+  let surahsData = [];
+  let isDownloading = false;
+  let savedTime = 0;
+
+  // Normalize helper (handles Arabic & Latin)
+  const normalize = (s) => (s || "")
+    .toString()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, "")
+    .replace(/[إأآا]/g, "ا")
+    .replace(/ى/g, "ي")
+    .replace(/ؤ/g, "و")
+    .replace(/ئ/g, "ي")
+    .toLowerCase()
+    .trim();
+
+  const highlightMatch = (name, qNorm) => {
+    const nName = normalize(name);
+    const idx = nName.indexOf(qNorm);
+    if (idx === -1) return name;
+    let result = "";
+    let count = 0;
+    for (const ch of name) {
+      const chNorm = normalize(ch);
+      if (count === idx) result += "<mark>";
+      result += ch;
+      if (count === idx + qNorm.length - 1) result += "</mark>";
+      if (chNorm.length) count++;
+    }
+    return result;
+  };
+
+  const plyrPlayer = new Plyr(audioPlayer, {
+    controls: ['play', 'progress'],
+    tooltips: { controls: true, seek: true }
+  });
+
+  function formatTime(seconds) {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+    if (hrs > 0) {
+      return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    } else {
+      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+  }
+
+  plyrPlayer.on('timeupdate', () => {
+    currentTimeEl.textContent = formatTime(plyrPlayer.currentTime);
+    localStorage.setItem('quran_time', plyrPlayer.currentTime);
+  });
+  plyrPlayer.on('loadedmetadata', () => {
+    totalTimeEl.textContent = formatTime(plyrPlayer.duration);
+  });
+
+  const languages = [
+    {code:'ar', name:'العربية'}, {code:'eng', name:'English'}, {code:'fr', name:'Français'},
+    {code:'es', name:'Español'}, {code:'de', name:'Deutsch'}, {code:'ur', name:'اردو'},
+    {code:'bn', name:'বাংলা'}, {code:'tr', name:'Türkçe'}, {code:'ru', name:'Русский'},
+    {code:'id', name:'Bahasa Indonesia'}, {code:'pt', name:'Português'}
+  ];
+  languageSelect.innerHTML = languages.map(l => `<option value="${l.code}">${l.name}</option>`).join('');
+  languageSelect.value = localStorage.getItem('quran_language') || 'ar';
+
+  const showLoading = (msg) => loadingMessage.textContent = msg;
+  const hideLoading = () => loadingMessage.textContent = '';
+  const fetchJson = async (url) => {
+    try {
+      showLoading('...جاري تحميل البيانات');
+      const res = await fetch(url);
+      if (!res.ok) throw new Error();
+      const json = await res.json();
+      hideLoading();
+      return json;
+    } catch {
+      hideLoading();
+      alert('تعذر تحميل البيانات.');
+      return null;
+    }
+  };
+
+  async function populateReciters() {
+    reciterSelect.disabled = true;
+    moshafSelect.disabled = true;
+    surahSelect.disabled = true;
+    const data = await fetchJson(`https://www.mp3quran.net/api/v3/reciters?language=${languageSelect.value}`);
+    if (data?.reciters) {
+      recitersData = data.reciters;
+      recitersIndex = recitersData.map(r => ({...r, _norm: normalize(r.name)}));
+      reciterSelect.innerHTML = `<option value="">-- اختر القارئ --</option>` +
+        recitersData.map(r => `<option value="${r.id}" data-moshaf='${JSON.stringify(r.moshaf)}'>${r.name}</option>`).join('');
+      reciterSelect.disabled = false;
+      const savedReciter = localStorage.getItem('quran_reciter');
+      if (savedReciter) { reciterSelect.value = savedReciter; populateMoshafs(); }
+    }
+  }
+
+  function populateMoshafs() {
+    moshafSelect.disabled = true;
+    moshafSelect.innerHTML = `<option value="">-- اختر الرواية --</option>`;
+    const reciterOpt = reciterSelect.options[reciterSelect.selectedIndex];
+    if (!reciterOpt || !reciterOpt.dataset.moshaf) return;
+    try {
+      const moshafArray = JSON.parse(reciterOpt.dataset.moshaf || '[]');
+      moshafArray.forEach((m, index) => {
+        moshafSelect.innerHTML += `<option value="${index}" data-server="${m.server}" data-surahs="${m.surah_list}">${m.name}</option>`;
+      });
+      moshafSelect.disabled = false;
+      const savedMoshaf = localStorage.getItem('quran_moshaf');
+      if (savedMoshaf && moshafSelect.options[savedMoshaf]) { moshafSelect.value = savedMoshaf; populateSurahs(); }
+    } catch {}
+  }
+
+  async function populateSurahs() {
+    surahSelect.disabled = true;
+    const data = await fetchJson(`https://www.mp3quran.net/api/v3/suwar?language=${languageSelect.value}`);
+    if (data?.suwar) {
+      surahsData = data.suwar;
+      let availableSurahs = [];
+      if (moshafSelect.value) {
+        const allowedIds = new Set(moshafSelect.options[moshafSelect.selectedIndex].dataset.surahs.split(','));
+        availableSurahs = surahsData.filter(s => allowedIds.has(String(s.id)));
+      }
+      surahSelect.innerHTML = `<option value="">-- اختر السورة --</option>` +
+        availableSurahs.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+      surahSelect.disabled = false;
+      const savedSurah = localStorage.getItem('quran_surah');
+      if (savedSurah && availableSurahs.find(s => s.id == savedSurah)) {
+        surahSelect.value = savedSurah;
+        savedTime = parseFloat(localStorage.getItem('quran_time')) || 0;
+        updatePlayer(true, savedTime);
+      }
+    }
+  }
+
+  function buildAudioUrl() {
+    const surahId = surahSelect.value;
+    const server = moshafSelect.options[moshafSelect.selectedIndex]?.dataset.server;
+    return server ? `${server}${String(surahId).padStart(3, '0')}.mp3` : null;
+  }
+
+  function updatePlayer(autoplay = false, startTime = 0) {
+    const audioUrl = buildAudioUrl();
+    const surahName = surahsData.find(s => s.id == surahSelect.value)?.name || '';
+    const reciterName = reciterSelect.options[reciterSelect.selectedIndex]?.text || '';
+    if (!audioUrl) { playerWrapper.style.display = 'none'; return; }
+    playerSurahName.textContent = surahName;
+    playerReciterName.textContent = reciterName;
+    downloadLink.href = audioUrl;
+    plyrPlayer.source = { type: 'audio', title: surahName, sources: [{ src: audioUrl, type: 'audio/mp3' }] };
+    playerWrapper.style.display = 'block';
+    plyrPlayer.once('loadedmetadata', () => {
+      if (startTime > 0) plyrPlayer.currentTime = startTime;
+      if (autoplay) plyrPlayer.play().catch(()=>{});
+    });
+  }
+
+  async function forceDownload(url, filename) {
+    if (isDownloading) return;
+    isDownloading = true;
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error();
+      const contentLength = res.headers.get('content-length');
+      if (!contentLength) throw new Error('No content length');
+      const total = parseInt(contentLength, 10);
+      let loaded = 0;
+      const reader = res.body.getReader();
+      const chunks = [];
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        loaded += value.length;
+        const percent = Math.floor((loaded / total) * 100);
+        showLoading(`...جاري التحميل ${percent}%`);
+      }
+      const blob = new Blob(chunks);
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      alert('فشل التنزيل.');
+    } finally {
+      isDownloading = false;
+      hideLoading();
+    }
+  }
+
+  downloadLink.addEventListener('click', e => {
+    e.preventDefault();
+    const reciterName = reciterSelect.options[reciterSelect.selectedIndex]?.text || '';
+    const surahName = surahsData.find(s => s.id == surahSelect.value)?.name || '';
+    const url = downloadLink.href;
+    if (url && url !== '#') forceDownload(url, `${reciterName}_${surahName}.mp3`);
+  });
+
+  languageSelect.addEventListener('change', async () => {
+    localStorage.setItem('quran_language', languageSelect.value);
+    plyrPlayer.stop(); playerWrapper.style.display = 'none';
+    await populateReciters();
+  });
+  reciterSelect.addEventListener('change', () => {
+    localStorage.setItem('quran_reciter', reciterSelect.value);
+    localStorage.removeItem('quran_surah'); localStorage.removeItem('quran_time');
+    plyrPlayer.stop(); playerWrapper.style.display = 'none';
+    populateMoshafs();
+  });
+  moshafSelect.addEventListener('change', () => {
+    localStorage.setItem('quran_moshaf', moshafSelect.value);
+    localStorage.removeItem('quran_surah'); 
+    localStorage.removeItem('quran_time');
+    plyrPlayer.stop(); 
+    playerWrapper.style.display = 'none';
+    populateSurahs();
+  });
+  surahSelect.addEventListener('change', () => {
+    localStorage.setItem('quran_surah', surahSelect.value);
+    localStorage.removeItem('quran_time');
+    if (surahSelect.value) updatePlayer(true);
+  });
+
+  // Search modal open/close
+  openReciterSearch.addEventListener('click', () => {
+    reciterSearchOverlay.style.display = 'flex';
+    reciterSearchInput.value = '';
+    reciterSearchResults.innerHTML = '';
+    reciterSearchInput.focus();
+  });
+  reciterSearchOverlay.addEventListener('click', (e) => {
+    if (e.target === reciterSearchOverlay) {
+      reciterSearchOverlay.style.display = 'none';
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && reciterSearchOverlay.style.display === 'flex') {
+      reciterSearchOverlay.style.display = 'none';
+    }
+  });
+
+  // Search filtering
+  reciterSearchInput.addEventListener('input', () => {
+    const qNorm = normalize(reciterSearchInput.value);
+    reciterSearchResults.innerHTML = '';
+    if (!qNorm) return;
+
+    const filtered = recitersIndex.filter(r => r._norm.includes(qNorm));
+    if (filtered.length === 0) {
+      reciterSearchResults.innerHTML = `<div class="search-result-item" style="cursor:default;">لا توجد نتائج</div>`;
+    } else {
+      filtered.forEach(reciter => {
+        const item = document.createElement('div');
+        item.className = 'search-result-item';
+        item.innerHTML = highlightMatch(reciter.name, qNorm);
+        item.dataset.id = reciter.id;
+        reciterSearchResults.appendChild(item);
+      });
+    }
+  });
+
+  // Select reciter from search results
+  reciterSearchResults.addEventListener('click', (e) => {
+    const target = e.target.closest('.search-result-item');
+    if (target && target.dataset.id) {
+      reciterSelect.value = target.dataset.id;
+      reciterSelect.dispatchEvent(new Event('change'));
+      reciterSearchOverlay.style.display = 'none';
+    }
+  });
+
+  (async () => { await populateReciters(); })();
+});
+</script>
+
+<!-- Service Worker Registration -->
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js')
+      .then(reg => console.log('Service Worker registered:', reg.scope))
+      .catch(err => console.log('Service Worker registration failed:', err));
+  });
+}
+</script>
+
+</body>
+</html>
