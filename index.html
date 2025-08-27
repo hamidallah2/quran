@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>القرآن الكريم</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css">
+
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+
+  <div class="container">
+    
+    <i id="openReciterSearch" class="fas fa-search"></i>
+
+    <div class="controls-column">
+      <h2>القرآن الكريم</h2>
+
+      <div class="control-row">
+        <label for="reciterSelect">القارئ</label>
+        <select id="reciterSelect" disabled></select>
+      </div>
+
+      <div class="control-row">
+        <label for="moshafSelect">الرواية / المصحف</label>
+        <select id="moshafSelect" disabled></select>
+      </div>
+
+      <div class="control-row">
+        <label for="surahSelect">السورة</label>
+        <select id="surahSelect" disabled></select>
+      </div>
+
+      <div id="spinner" style="display:none; text-align:center; margin-top:10px;">
+        <i class="fas fa-spinner fa-spin"></i>
+      </div>
+
+      <div id="loadingMessage"></div>
+    </div>
+
+    <div class="player-column">
+      <div id="player-wrapper" style="display:none;">
+        <div class="single-line-player">
+          <audio id="audioPlayer" class="plyr" controls crossorigin="anonymous"></audio>
+          <div class="time-display">
+            <span id="currentTime">00:00</span> /
+            <span id="totalTime">00:00</span>
+          </div>
+          <div class="download-buttons">
+            <a id="downloadLink" href="#"><i class="fas fa-download"></i></a>
+          </div>
+        </div>
+
+        <div id="downloadProgressContainer" style="display:none;">
+          <div id="downloadProgressBar">
+            <div id="downloadProgressFill"></div>
+          </div>
+          <div id="downloadProgressText"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="reciterSearchOverlay" style="display:none;">
+    <div id="reciterSearchBox">
+      <!-- Close button added here -->
+      <div class="search-header">
+        <button id="closeSearchButton" type="button" aria-label="إغلاق البحث">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="search-input-row">
+        <input 
+          type="text" 
+          id="reciterSearchInput" 
+          placeholder="اكتب اسم القارئ للبحث">
+        <button id="clearSearchButton" style="display:none;">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div id="reciterSearchResults"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.polyfilled.min.js"></script>
+  <script type="module" src="scripts/main.js"></script>
+</body>
+</html>
