@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>القرآن الكريم</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css">
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+
+  <div class="container">
+
+    <!-- Search toggle -->
+    <i id="openReciterSearch" class="fas fa-search" title="البحث عن قارئ"></i>
+
+    <!-- Favorites toggle (top-right) -->
+    <button id="openFavoritesPanel" class="header-fav-btn" title="المفضلة">
+      <i class="fas fa-heart"></i>
+      <span id="favCount" style="display:none;">0</span>
+    </button>
+
+    <!-- ── Header ── -->
+    <div class="app-header">
+      <div class="app-title">القرآن الكريم</div>
+      <div class="app-subtitle">Holy Quran Streaming</div>
+    </div>
+
+    <!-- ── Selectors ── -->
+    <div class="controls-column">
+
+      <div class="control-row">
+        <span class="control-label">القارئ</span>
+        <select id="reciterSelect" disabled></select>
+      </div>
+
+      <div class="control-row">
+        <span class="control-label">الرواية</span>
+        <select id="moshafSelect" disabled></select>
+      </div>
+
+      <div class="control-row">
+        <span class="control-label">السورة</span>
+        <select id="surahSelect" disabled></select>
+      </div>
+
+      <div id="spinner" style="display:none;">
+        <i class="fas fa-spinner fa-spin"></i>
+      </div>
+      <div id="loadingMessage"></div>
+
+    </div>
+
+    <!-- ── Player ── -->
+    <div class="section-divider"></div>
+    <div class="player-column">
+      <div id="player-wrapper" style="display:none;">
+
+        <!-- Now-playing info -->
+        <div class="player-info">
+          <div class="player-surah-name" id="playerSurahName">—</div>
+          <div class="player-reciter-name" id="playerReciterName">—</div>
+        </div>
+
+        <!-- Controls row -->
+        <div class="single-line-player">
+          <audio id="audioPlayer" class="plyr" controls crossorigin="anonymous"></audio>
+          <div class="time-display">
+            <span id="currentTime">00:00</span> / <span id="totalTime">00:00</span>
+          </div>
+          <div class="player-action-buttons">
+            <!-- Favorite toggle -->
+            <button id="favoriteBtn" class="player-icon-btn fav-toggle" title="إضافة إلى المفضلة">
+              <i class="fas fa-heart"></i>
+            </button>
+            <!-- Download -->
+            <a id="downloadLink" href="#" class="player-icon-btn" title="تحميل السورة">
+              <i class="fas fa-download"></i>
+            </a>
+          </div>
+        </div>
+
+        <!-- Download progress -->
+        <div id="downloadProgressContainer" style="display:none;">
+          <div id="downloadProgressBar">
+            <div id="downloadProgressFill"></div>
+          </div>
+          <div id="downloadProgressText"></div>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /.container -->
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- Favorites Panel (slide-in overlay)            -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div id="favoritesPanel" class="fav-panel hidden">
+    <div class="fav-panel-box">
+
+      <div class="fav-panel-header">
+        <span class="fav-panel-title">
+          <i class="fas fa-heart"></i> المفضلة
+        </span>
+        <button id="closeFavoritesPanel" class="fav-close-btn" aria-label="إغلاق">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div id="favoritesList" class="fav-list"></div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- Reciter Search Overlay                        -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div id="reciterSearchOverlay" style="display:none;">
+    <div id="reciterSearchBox">
+
+      <div class="search-header">
+        <span class="search-header-title">البحث عن قارئ</span>
+        <button id="closeSearchButton" type="button" aria-label="إغلاق البحث">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="search-input-row">
+        <input
+          type="text"
+          id="reciterSearchInput"
+          placeholder="اكتب اسم القارئ للبحث…"
+          autocomplete="off">
+        <button id="clearSearchButton" style="display:none;" aria-label="مسح البحث">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div id="reciterSearchResults" role="listbox" aria-label="نتائج البحث"></div>
+
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.polyfilled.min.js"></script>
+  <script type="module" src="scripts/main.js"></script>
+</body>
+</html>
